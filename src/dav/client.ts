@@ -34,6 +34,56 @@ export class Client {
         return new Client(axios.create({ baseURL, auth }))
     }
 
+    async tagslist(fileid: string): Promise<Array<Tag>> {
+        const url: string = `/systemtags-relations/files/${fileid}`
+        const responses = await this._props(url, ['display-name', 'id'])
+        var tags = responses.reduce(
+            (carry: Array<Tag>, item: MultiStatusResponse) => {
+                if (
+                    item.propStat.length === 0 ||
+                    item.propStat[0].status !== 'HTTP/1.1 200 OK'
+                ) {
+                    return carry
+                }
+                const tag = new Tag(
+                    item.propStat[0].properties['{http://owncloud.org/ns}id'],
+                    item.propStat[0].properties[
+                        '{http://owncloud.org/ns}display-name'
+                    ],
+                )
+                carry.push(tag)
+                return carry
+            },
+            [],
+        )
+        return tags
+    }
+
+    async fileprops(
+        path: string,
+        names: Array<string> = ['fileid', 'foreign-id'],
+    ): Promise<FileProps> {
+        const responses = await this._props(path, names)
+        let response: MultiStatusResponse = responses[0]
+        if (
+            response.propStat.length === 0 ||
+            response.propStat[0].status !== 'HTTP/1.1 200 OK'
+        ) {
+            throw new Error(
+                `Can't find file ${path}. ${response.propStat[0].status}`,
+            )
+        }
+        const props = Object.keys(response.propStat[0].properties).reduce(
+            (carry, key) => {
+                const name: string = key.replace('{http://owncloud.org/ns}', '')
+                carry[name] = response.propStat[0].properties[key]
+                return carry
+            },
+            {},
+        )
+        return new FileProps(path, props)
+    }
+
     async saveProps(fileprops: FileProps) {
         // @ts-ignore axios doesn't have PROPPATCH method
         const rawResponse = await this._connection({
@@ -70,7 +120,10 @@ export class Client {
         }
     }
 
-    async fileprops(path: string): Promise<FileProps> {
+    private async _props(
+        path: string,
+        names: Array<string>,
+    ): Promise<Array<MultiStatusResponse>> {
         // @ts-ignore axios doesn't have PROPFIND method
         const rawResponse = await this._connection({
             method: 'PROPFIND',
@@ -80,33 +133,12 @@ export class Client {
 					xmlns:oc="http://owncloud.org/ns"
 					xmlns:nc="http://nextcloud.org/ns"
 					xmlns:ocs="http://open-collaboration-services.org/ns">
-				<d:prop>
-					<oc:fileid />
-					<oc:foreign-id />
+                <d:prop>
+                    ${names.map(name => `<oc:${name} />`).join('')}
 				</d:prop>
 				</d:propfind>`,
         })
-        const responses: Array<MultiStatusResponse> = this._parseMultiStatus(
-            rawResponse.data,
-        )
-        let response: MultiStatusResponse = responses[0]
-        if (
-            response.propStat.length === 0 ||
-            response.propStat[0].status !== 'HTTP/1.1 200 OK'
-        ) {
-            throw new Error(
-                `Can't find file ${path}. ${response.propStat[0].status}`,
-            )
-        }
-        const props = Object.keys(response.propStat[0].properties).reduce(
-            (carry, key) => {
-                const name: string = key.replace('{http://owncloud.org/ns}', '')
-                carry[name] = response.propStat[0].properties[key]
-                return carry
-            },
-            {},
-        )
-        return new FileProps(path, props)
+        return this._parseMultiStatus(rawResponse.data)
     }
 
     async createTag(name: string): Promise<Tag> {
