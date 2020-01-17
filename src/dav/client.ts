@@ -110,15 +110,6 @@ export class Client {
     }
 
     async createTag(name: string): Promise<Tag> {
-        this._connection.interceptors.request.use(request => {
-            console.log('Starting Request', request)
-            return request
-        })
-
-        this._connection.interceptors.response.use(response => {
-            console.log('Response:', response)
-            return response
-        })
         const response = await this._connection({
             method: 'POST',
             url: '/systemtags',
