@@ -34,6 +34,20 @@ export class Client {
         return new Client(axios.create({ baseURL, auth }))
     }
 
+    async addTag(fileid: string, tag: Tag) {
+        const response = await this._connection({
+            method: 'PUT',
+            url: `/systemtags-relations/files/${fileid}/${tag.id()}`,
+        })
+    }
+
+    async removeTag(fileid: string, tag: Tag) {
+        const response = await this._connection({
+            method: 'DELETE',
+            url: `/systemtags-relations/files/${fileid}/${tag.id()}`,
+        })
+    }
+
     async tagslist(fileid: string): Promise<Array<Tag>> {
         const url: string = `/systemtags-relations/files/${fileid}`
         const responses = await this._props(url, ['display-name', 'id'])
