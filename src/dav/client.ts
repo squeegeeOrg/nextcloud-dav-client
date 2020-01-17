@@ -5,9 +5,7 @@ import axios, {
 } from 'axios'
 import { FileProps } from './fileprops'
 import { DOMParser } from 'xmldom'
-import axios, { AxiosInstance, AxiosBasicCredentials, AxiosRequestConfig } from 'axios';
-import { FileProps } from './fileprops';
-import {DOMParser} from 'xmldom';
+import { Tag } from './tag'
 interface MultiStatusResponse {
     href: string | null
     propStat: Array<PropertyStatus>
@@ -56,7 +54,7 @@ export class Client {
                 .join('')}</d:propertyupdate>`,
         })
 
-        const responses: Array<MultiStatusResponse> = this.parseMultiStatus(
+        const responses: Array<MultiStatusResponse> = this._parseMultiStatus(
             rawResponse.data,
         )
         var response = responses[0]
@@ -88,7 +86,7 @@ export class Client {
 				</d:prop>
 				</d:propfind>`,
         })
-        const responses: Array<MultiStatusResponse> = this.parseMultiStatus(
+        const responses: Array<MultiStatusResponse> = this._parseMultiStatus(
             rawResponse.data,
         )
         let response: MultiStatusResponse = responses[0]
@@ -111,8 +109,48 @@ export class Client {
         return new FileProps(path, props)
     }
 
+    async createTag(name: string): Promise<Tag> {
+        this._connection.interceptors.request.use(request => {
+            console.log('Starting Request', request)
+            return request
+        })
 
-    private parseMultiStatus(doc: string): Array<MultiStatusResponse> {
+        this._connection.interceptors.response.use(response => {
+            console.log('Response:', response)
+            return response
+        })
+        const response = await this._connection({
+            method: 'POST',
+            url: '/systemtags',
+            data: {
+                userVisible: true,
+                userAssignable: true,
+                canAssign: true,
+                name: name,
+            },
+        })
+        var url = response.headers['content-location']
+        const id = this._parseIdFromLocation(url)
+        return new Tag(id, name)
+    }
+
+    private _parseIdFromLocation(url: string): string {
+        const queryPos = url.indexOf('?')
+        if (queryPos > 0) {
+            url = url.substr(0, queryPos)
+        }
+
+        const parts = url.split('/')
+        let result
+        do {
+            result = parts[parts.length - 1]
+            parts.pop()
+        } while (!result && parts.length > 0)
+
+        return result
+    }
+
+    private _parseMultiStatus(doc: string): Array<MultiStatusResponse> {
         let result: Array<MultiStatusResponse> = []
         const xmlNamespaces: object = this.xmlNamespaces
         const resolver: Function = function(namespace: string) {
@@ -125,7 +163,11 @@ export class Client {
             return undefined
         }.bind(this)
 
-        const responses = this.getElementsByTagName(doc, 'd:response', resolver)
+        const responses = this._getElementsByTagName(
+            doc,
+            'd:response',
+            resolver,
+        )
         let i: number
         for (i = 0; i < responses.length; i++) {
             let responseNode: any = responses[i]
@@ -134,7 +176,7 @@ export class Client {
                 propStat: [],
             }
 
-            let hrefNode: any = this.getElementsByTagName(
+            let hrefNode: any = this._getElementsByTagName(
                 responseNode,
                 'd:href',
                 resolver,
@@ -142,7 +184,7 @@ export class Client {
 
             response.href = hrefNode.textContent || hrefNode.text
 
-            let propStatNodes = this.getElementsByTagName(
+            let propStatNodes = this._getElementsByTagName(
                 responseNode,
                 'd:propstat',
                 resolver,
@@ -151,7 +193,7 @@ export class Client {
 
             for (j = 0; j < propStatNodes.length; j++) {
                 let propStatNode: any = propStatNodes[j]
-                let statusNode: any = this.getElementsByTagName(
+                let statusNode: any = this._getElementsByTagName(
                     propStatNode,
                     'd:status',
                     resolver,
@@ -162,7 +204,7 @@ export class Client {
                     properties: {},
                 }
 
-                let propNode: any = this.getElementsByTagName(
+                let propNode: any = this._getElementsByTagName(
                     propStatNode,
                     'd:prop',
                     resolver,
@@ -173,7 +215,7 @@ export class Client {
                 let k: number = 0
                 for (k = 0; k < propNode.childNodes.length; k++) {
                     let prop: any = propNode.childNodes[k]
-                    let value: any = this.parsePropNode(prop)
+                    let value: any = this._parsePropNode(prop)
                     propStat.properties[
                         '{' +
                             prop.namespaceURI +
@@ -190,7 +232,7 @@ export class Client {
         return result
     }
 
-    private parsePropNode(e: any): string {
+    private _parsePropNode(e: any): string {
         let t: Array<any> | null = null
         if (e.childNodes && e.childNodes.length > 0) {
             let n: Array<any> = []
@@ -205,7 +247,7 @@ export class Client {
         return t || e.textContent || e.text || ''
     }
 
-    private getElementsByTagName(
+    private _getElementsByTagName(
         node: any,
         name: string,
         resolver: Function,
