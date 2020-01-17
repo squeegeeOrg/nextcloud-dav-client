@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+      "target": "es6",
+      "esModuleInterop": true,
+      "module": "commonjs",
+      "outDir": "build",
+      "sourceMap": true,
+      "allowJs": false,
+      "moduleResolution": "node",
+      "rootDirs": [
+        "src",
+        "testIntegration"
+      ],
+      "forceConsistentCasingInFileNames": true,
+      "noImplicitReturns": true,
+      "noImplicitThis": true,
+      "noImplicitAny": false,
+      "strictNullChecks": true,
+      "strictPropertyInitialization": true,
+      "suppressImplicitAnyIndexErrors": true,
+      "noUnusedLocals": false,
+      "alwaysStrict": false,
+      "lib": [
+        "dom",
+        "es6",
+        "es7",
+        "es2017"
+      ],
+      "baseUrl": ".",
+    },
+    "exclude": [
+      "./node_modules",
+      "./build"
+    ]
+  }

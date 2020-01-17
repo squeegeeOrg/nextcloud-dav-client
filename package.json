@@ -1,0 +1,51 @@
+{
+  "name": "nextcloud-webdav-client",
+  "description": "Wrapper for nextcloud webdav",
+  "scripts": {
+    "clean": "rm -rf build/*",
+    "start": "npm run build && node build/src/index.js",
+    "build": "tsc",
+    "prettier": "npm run prettier-md && npm run prettier-ts",
+    "prettier-md": "prettier --parser markdown --write \"*.md\"",
+    "prettier-ts": "prettier --write \"./src/**/*.ts\"",
+    "lint": "npm run lint-ts && npm run lint-md",
+    "lint-md": "markdownlint \"*.md\"",
+    "lint-ts": "tslint --project ./tsconfig.json --fix \".src/**/*.ts\"",
+    "test": "mocha --opts ./mocha.opts 'src/**/*.test.ts'",
+    "testIntegration": "DEBUG=ioredis:* mocha --opts ./mocha.opts testIntegration/**/*.test.ts",
+    "watch": "nodemon ./src/index.ts | bunyan"
+  },
+  "author": "Wuerth-IT GmbH",
+  "license": "UNLICENSED",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git://gitlab.com/hcbd/nextcloud.git"
+  },
+  "dependencies": {
+    "@types/xmldom": "0.1.29",
+    "axios": "0.19.1",
+    "xmldom": "0.2.1"
+  },
+  "devDependencies": {
+    "@types/chai": "4.2.6",
+    "@types/config": "0.0.36",
+    "@types/mocha": "5.2.7",
+    "@types/node": "12.12.14",
+    "@types/ioredis": "4.14.0",
+    "chai": "4.2.0",
+    "ioredis-mock": "4.18.4",
+    "markdownlint-cli": "0.18.0",
+    "mocha": "6.2.0",
+    "nodemon": "1.19.2",
+    "prettier": "1.18.2",
+    "ts-node": "8.4.1",
+    "tslint": "5.20.0",
+    "tslint-sonarts": "1.9.0",
+    "typescript": "3.6.3"
+  },
+  "engines": {
+    "node": ">= 10.0",
+    "npm": ">= 5.6"
+  }
+}
