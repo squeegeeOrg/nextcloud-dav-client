@@ -30,9 +30,30 @@ export class Client {
         return new Client(axios.create({ baseURL, auth }))
     }
 
+    async saveProps(fileprops: FileProps) {
+        // @ts-ignore axios doesn't have PROPPATCH method
+		const rawResponse = await this._connection({
+			method: 'PROPPATCH',
+			url: fileprops.path() ,
+			data: `<?xml version="1.0"?>
+            <d:propertyupdate  xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
+            ${fileprops.all().filter((prop) => prop.name !== 'fileid').map((prop) => `<d:set>
+              <d:prop>
+                <oc:${prop.name}>${prop.value}</oc:${prop.name}>
+              </d:prop>
+            </d:set>`).join('')}</d:propertyupdate>`,
+		});
+
+		const responses: Array<MultiStatusResponse> = this.parseMultiStatus(rawResponse.data)
+		var response = responses[0];
+		if (response.propStat.length === 0 || response.propStat[0].status !== 'HTTP/1.1 200 OK') {
+            throw new Error(`Can't update properties of file ${fileprops.path()}. ${response.propStat[0].status}`);
+		}
+    }
+
     async fileprops(path: string): Promise<FileProps> {
         // @ts-ignore axios doesn't have PROPFIND method
-        const response = await this._connection({
+        const rawResponse = await this._connection({
             method: 'PROPFIND',
             url: path,
             data: `<?xml version="1.0"?>
@@ -46,14 +67,14 @@ export class Client {
 				</d:prop>
 				</d:propfind>`,
         });
-        const parsed: Array<MultiStatusResponse> = this.parseMultiStatus(response.data)
-        let first: MultiStatusResponse = parsed[0];
-        if (first.propStat.length === 0 || first.propStat[0].status !== 'HTTP/1.1 200 OK') {
-            throw new Error(`Can't find file ${path}. ${first.propStat[0].status}`);
+        const responses: Array<MultiStatusResponse> = this.parseMultiStatus(rawResponse.data)
+        let response: MultiStatusResponse = responses[0];
+        if (response.propStat.length === 0 || response.propStat[0].status !== 'HTTP/1.1 200 OK') {
+            throw new Error(`Can't find file ${path}. ${response.propStat[0].status}`);
         }
-        const props = Object.keys(first.propStat[0].properties).reduce((carry, key) => {
+        const props = Object.keys(response.propStat[0].properties).reduce((carry, key) => {
             const name:string = key.replace('{http://owncloud.org/ns}', '');
-            carry[name] = first.propStat[0].properties[key]
+            carry[name] = response.propStat[0].properties[key]
             return carry
         }, {});
         return new FileProps(path, props);

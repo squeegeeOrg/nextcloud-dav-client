@@ -1,4 +1,10 @@
+interface Property {
+    name: string,
+    value: string
+}
+
 export class FileProps {
+
     private _path: string;
     private _props: object;
 
@@ -7,14 +13,25 @@ export class FileProps {
 		this._props = props;
     }
 
-    setProperty(name: string, value: string): FileProps {
+    path(): string {
+        return this._path;
+    }
+
+    withProperty(name: string, value: string): FileProps {
         let newProps =  {...this._props};
         newProps[name] = value;
         return new FileProps(this._path, newProps);
     }
     
-    getProperty(name: string): string {
+    property(name: string): string {
         return this._props[name];
+    }
+
+    all(): Array<Property> {
+        return Object.keys(this._props).reduce((carry: Array<Property>, key: string) => {
+            carry.push({name: key, value: this._props[key]});
+            return carry;
+        }, []);
     }
     
 }
