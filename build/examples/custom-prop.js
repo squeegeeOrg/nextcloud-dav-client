@@ -21,15 +21,10 @@ let auth = {
 (() => __awaiter(void 0, void 0, void 0, function* () {
     let dav = index_1.Client.create(baseURL, auth);
     let fileprops = yield dav.fileprops(`files/${username}/${projectname}/`);
-    let tag = yield dav.createTag('tag-1');
-    console.log(tag.id());
-    let tagslist = yield dav.tagslist(fileprops.property('fileid'));
-    console.log(tagslist);
-    yield dav.addTag(fileprops.property('fileid'), tag);
-    tagslist = yield dav.tagslist(fileprops.property('fileid'));
-    console.log(tagslist);
-    yield dav.removeTag(fileprops.property('fileid'), tag);
-    tagslist = yield dav.tagslist(fileprops.property('fileid'));
-    console.log(tagslist);
+    console.log(fileprops.property('fileid'));
+    fileprops = fileprops.withProperty('foreign-id', 'foo');
+    yield dav.saveProps(fileprops);
+    fileprops = yield dav.fileprops(`files/${username}/${projectname}/`);
+    console.log(fileprops.all());
 }))();
-//# sourceMappingURL=tags.js.map
+//# sourceMappingURL=custom-prop.js.map

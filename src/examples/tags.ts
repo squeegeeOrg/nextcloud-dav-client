@@ -1,8 +1,8 @@
 import { Client, FileProps, Tag } from '../index'
 import { AxiosBasicCredentials } from 'axios'
 
-const username = 'username'
-const password = 'password'
+const username = 'arturking'
+const password = '333333'
 const projectname = 'project1'
 let baseURL: string = 'http://localhost/remote.php/dav/'
 
@@ -15,7 +15,7 @@ let auth: AxiosBasicCredentials = {
     let fileprops: FileProps = await dav.fileprops(
         `files/${username}/${projectname}/`,
     )
-    let tag: Tag = await dav.createTag('tag-0')
+    let tag: Tag = await dav.createTag('tag-1')
     console.log(tag.id())
     let tagslist = await dav.tagslist(fileprops.property('fileid'))
     console.log(tagslist)
