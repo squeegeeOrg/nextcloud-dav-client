@@ -13,4 +13,3 @@ so you still have to run the command: Ctrl-Shift-P -> `Tasks: Terminate Task`
 
 For testing in VSCode start the `run all tests` or `Test current file` launch
 config.
-
