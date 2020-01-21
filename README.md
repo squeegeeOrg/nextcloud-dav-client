@@ -17,6 +17,6 @@ config.
 ## Examples
 
 Add `foreign id`  
-`npm run build && node build/src/examples/custom-prop.js`
+`npm run build && node build/examples/custom-prop.js`
 
-Add/remove tag `npm run build && node build/src/examples/tags.js`
+Add/remove tag `npm run build && node build/examples/tags.js`
