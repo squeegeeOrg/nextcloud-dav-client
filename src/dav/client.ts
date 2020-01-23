@@ -37,14 +37,14 @@ export class Client {
     async addTag(fileid: string, tag: Tag) {
         const response = await this._connection({
             method: 'PUT',
-            url: `/systemtags-relations/files/${fileid}/${tag.id()}`,
+            url: `/systemtags-relations/files/${fileid}/${tag.id}`,
         })
     }
 
     async removeTag(fileid: string, tag: Tag) {
         const response = await this._connection({
             method: 'DELETE',
-            url: `/systemtags-relations/files/${fileid}/${tag.id()}`,
+            url: `/systemtags-relations/files/${fileid}/${tag.id}`,
         })
     }
 

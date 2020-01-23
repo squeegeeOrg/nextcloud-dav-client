@@ -16,7 +16,7 @@ let auth: AxiosBasicCredentials = {
         `files/${username}/${projectname}/`,
     )
     let tag: Tag = await dav.createTag('tag-1')
-    console.log(tag.id())
+    console.log(tag.id)
     let tagslist = await dav.tagslist(fileprops.property('fileid'))
     console.log(tagslist)
     await dav.addTag(fileprops.property('fileid'), tag)
