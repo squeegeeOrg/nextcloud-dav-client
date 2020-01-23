@@ -34,22 +34,22 @@ export class Client {
         return new Client(axios.create({ baseURL, auth }))
     }
 
-    async addTag(fileid: string, tag: Tag) {
+    async addTag(fileId: string, tag: Tag) {
         const response = await this._connection({
             method: 'PUT',
-            url: `/systemtags-relations/files/${fileid}/${tag.id}`,
+            url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
     }
 
-    async removeTag(fileid: string, tag: Tag) {
+    async removeTag(fileId: string, tag: Tag) {
         const response = await this._connection({
             method: 'DELETE',
-            url: `/systemtags-relations/files/${fileid}/${tag.id}`,
+            url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
     }
 
-    async tagslist(fileid: string): Promise<Array<Tag>> {
-        const url: string = `/systemtags-relations/files/${fileid}`
+    async tagslist(fileId: string): Promise<Array<Tag>> {
+        const url: string = `/systemtags-relations/files/${fileId}`
         const responses = await this._props(url, ['display-name', 'id'])
         var tags = responses.reduce(
             (carry: Array<Tag>, item: MultiStatusResponse) => {
@@ -75,7 +75,7 @@ export class Client {
 
     async fileprops(
         path: string,
-        names: Array<string> = ['fileid', 'foreign-id'],
+        names: Array<string> = ['fileId', 'foreign-id'],
     ): Promise<FileProps> {
         const responses = await this._props(path, names)
         let response: MultiStatusResponse = responses[0]
@@ -107,7 +107,7 @@ export class Client {
             <d:propertyupdate  xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
             ${fileprops
                 .all()
-                .filter(prop => prop.name !== 'fileid')
+                .filter(prop => prop.name !== 'fileId')
                 .map(
                     prop => `<d:set>
               <d:prop>
