@@ -13,11 +13,11 @@ export class FileProps {
         return new FileProps(this.path, newProps)
     }
 
-    property(name: string): string {
+    property = (name: string): string => {
         return this.props[name]
     }
 
-    all(): Property[] {
+    all = (): Property[] => {
         return Object.keys(this.props).reduce(
             (carry: Property[], key: string) => {
                 carry.push({ name: key, value: this.props[key] })
