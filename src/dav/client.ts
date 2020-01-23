@@ -92,7 +92,7 @@ export class Client {
         // @ts-ignore axios doesn't have PROPPATCH method
         const rawResponse = await this.connection({
             method: 'PROPPATCH',
-            url: fileProps.path(),
+            url: fileProps.path,
             data: `<?xml version="1.0"?>
             <d:propertyupdate  xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
             ${fileProps
@@ -118,7 +118,7 @@ export class Client {
             response.propStat[0].status !== 'HTTP/1.1 200 OK'
         ) {
             throw new Error(
-                `Can't update properties of file ${fileProps.path()}. ${
+                `Can't update properties of file ${fileProps.path}. ${
                     response.propStat[0].status
                 }`,
             )
@@ -276,10 +276,10 @@ export class Client {
     }
 
     private _getElementsByTagName = (
-        node: any,
+        node: Document | string,
         name: string,
         resolver: ResolverFunction,
-    ): any => {
+    ):  HTMLCollectionOf<Element> => {
         const parts: string[] = name.split(':')
         const tagName: string = parts[1]
         // @Sergey what to do here? namespace could be undefined, I put in a naive fix..
