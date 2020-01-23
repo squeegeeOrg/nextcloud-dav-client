@@ -3,7 +3,7 @@ import axios, {
     AxiosBasicCredentials,
     AxiosRequestConfig,
 } from 'axios'
-import { FileProps } from './fileprops'
+import { FileProps } from './fileProps'
 import { DOMParser } from 'xmldom'
 import { Tag } from './tag'
 interface MultiStatusResponse {
@@ -38,7 +38,7 @@ export class Client {
             url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
 
-    tagslist = async (fileId: string): Promise<Tag[]> => {
+    tagsList = async (fileId: string): Promise<Tag[]> => {
         const url = `/systemtags-relations/files/${fileId}`
         const responses = await this._props(url, ['display-name', 'id'])
         return responses.reduce(
@@ -62,7 +62,7 @@ export class Client {
         )
     }
 
-    fileprops = async (
+    fileProps = async (
         path: string,
         names: string[] = ['fileId', 'foreign-id'],
     ): Promise<FileProps> => {
@@ -87,15 +87,15 @@ export class Client {
         return new FileProps(path, props)
     }
 
-    saveProps = async (fileprops: FileProps) => {
+    saveProps = async (fileProps: FileProps) => {
 
         // @ts-ignore axios doesn't have PROPPATCH method
         const rawResponse = await this.connection({
             method: 'PROPPATCH',
-            url: fileprops.path(),
+            url: fileProps.path(),
             data: `<?xml version="1.0"?>
             <d:propertyupdate  xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
-            ${fileprops
+            ${fileProps
                 .all()
                 .filter(prop => prop.name !== 'fileId')
                 .map(
@@ -118,7 +118,7 @@ export class Client {
             response.propStat[0].status !== 'HTTP/1.1 200 OK'
         ) {
             throw new Error(
-                `Can't update properties of file ${fileprops.path()}. ${
+                `Can't update properties of file ${fileProps.path()}. ${
                     response.propStat[0].status
                 }`,
             )

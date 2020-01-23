@@ -14,19 +14,19 @@ const auth: AxiosBasicCredentials = {
 
 const run = async () => {
     const dav: Client = Client.create(baseURL, auth)
-    const fileprops: FileProps = await dav.fileprops(
+    const fileProps: FileProps = await dav.fileProps(
         `files/${username}/${projectname}/`,
     )
     const tag: Tag = await dav.createTag('tag-1')
     console.log(tag.id)
-    let tagslist = await dav.tagslist(fileprops.property('fileid'))
-    console.log(tagslist)
-    await dav.addTag(fileprops.property('fileid'), tag)
-    tagslist = await dav.tagslist(fileprops.property('fileid'))
-    console.log(tagslist)
-    await dav.removeTag(fileprops.property('fileid'), tag)
-    tagslist = await dav.tagslist(fileprops.property('fileid'))
-    console.log(tagslist)
+    const tagsList = await dav.tagsList(fileProps.property('fileId'))
+    console.log(tagsList)
+    await dav.addTag(fileProps.property('fileId'), tag)
+    const tagsListWithFileId = await dav.tagsList(fileProps.property('fileId'))
+    console.log(tagsListWithFileId)
+    await dav.removeTag(fileProps.property('fileId'), tag)
+    const tagsListRead = await dav.tagsList(fileProps.property('fileId'))
+    console.log(tagsListRead)
 }
 
-run()
+run().then()

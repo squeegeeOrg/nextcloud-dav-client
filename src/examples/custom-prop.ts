@@ -5,7 +5,7 @@ import { AxiosBasicCredentials } from 'axios'
 const username = 'arturking'
 // tslint:disable-next-line
 const password = '333333'
-const projectname = 'project1'
+const projectName = 'project1'
 const baseURL = 'http://localhost/remote.php/dav/'
 
 const auth: AxiosBasicCredentials = {
@@ -15,14 +15,14 @@ const auth: AxiosBasicCredentials = {
 
 const run = async () => {
     const dav: Client = Client.create(baseURL, auth)
-    let fileprops: FileProps = await dav.fileprops(
-        `files/${username}/${projectname}/`,
+    const fileProps: FileProps = await dav.fileProps(
+        `files/${username}/${projectName}/`,
     )
-    console.log(fileprops.property('fileId'))
-    fileprops = fileprops.withProperty('foreign-id', 'foo')
-    await dav.saveProps(fileprops)
-    fileprops = await dav.fileprops(`files/${username}/${projectname}/`)
-    console.log(fileprops.all())
+    console.log(fileProps.property('fileId'))
+    const filePropsWithForeignId = fileProps.withProperty('foreign-id', 'foo')
+    await dav.saveProps(filePropsWithForeignId)
+    const filePropsRead = await dav.fileProps(`files/${username}/${projectName}/`)
+    console.log(filePropsRead.all())
 }
 
-run()
+run().then()
