@@ -10,8 +10,8 @@
     "prettier-ts": "prettier --write \"./src/**/*.ts\"",
     "lint": "npm run lint-ts && npm run lint-md",
     "lint-md": "markdownlint \"*.md\"",
-    "lint-ts": "tslint --project ./tsconfig.json --fix \".src/**/*.ts\"",
-    "test": "mocha --opts ./mocha.opts 'src/**/*.test.ts'",
+    "lint-ts": "tslint --project ./tsconfig.json --fix \"./src/**/*.ts\"",
+    "test": "mocha --opts ./mocha.opts './src/**/*.test.ts'",
     "watch": "nodemon ./src/index.ts | bunyan"
   },
   "author": "Wuerth-IT GmbH",

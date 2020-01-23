@@ -8,7 +8,7 @@ import { DOMParser } from 'xmldom'
 import { Tag } from './tag'
 interface MultiStatusResponse {
     href: string | null
-    propStat: Array<PropertyStatus>
+    propStat: PropertyStatus[]
 }
 
 interface PropertyStatus {
@@ -16,7 +16,11 @@ interface PropertyStatus {
     properties: object
 }
 
+type ResolverFunction = (namespace: string) => string | undefined
+
 export class Client {
+
+    constructor(readonly connection: AxiosInstance) {}
     private xmlNamespaces: object = {
         'DAV:': 'd',
         'http://owncloud.org/ns': 'oc',
@@ -24,31 +28,21 @@ export class Client {
         'http://open-collaboration-services.org/ns': 'ocs',
     }
 
-    constructor(readonly connection: AxiosInstance) {}
-
-    static create(baseURL: string, auth: AxiosBasicCredentials) {
-        return new Client(axios.create({ baseURL, auth }))
-    }
-
-    addTag = async (fileId: string, tag: Tag) => {
-        const response = await this.connection({
+    addTag = async (fileId: string, tag: Tag) =>  this.connection({
             method: 'PUT',
             url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
-    }
 
-    removeTag = async (fileId: string, tag: Tag) => {
-        const response = await this.connection({
+    removeTag = async (fileId: string, tag: Tag) =>  await this.connection({
             method: 'DELETE',
             url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
-    }
 
-    tagslist = async (fileId: string): Promise<Array<Tag>> => {
-        const url: string = `/systemtags-relations/files/${fileId}`
+    tagslist = async (fileId: string): Promise<Tag[]> => {
+        const url = `/systemtags-relations/files/${fileId}`
         const responses = await this._props(url, ['display-name', 'id'])
-        const tags = responses.reduce(
-            (carry: Array<Tag>, item: MultiStatusResponse) => {
+        return responses.reduce(
+            (carry: Tag[], item: MultiStatusResponse) => {
                 if (
                     item.propStat.length === 0 ||
                     item.propStat[0].status !== 'HTTP/1.1 200 OK'
@@ -66,12 +60,11 @@ export class Client {
             },
             [],
         )
-        return tags
     }
 
     fileprops = async (
         path: string,
-        names: Array<string> = ['fileId', 'foreign-id'],
+        names: string[] = ['fileId', 'foreign-id'],
     ): Promise<FileProps> => {
         const responses = await this._props(path, names)
         const response: MultiStatusResponse = responses[0]
@@ -95,6 +88,7 @@ export class Client {
     }
 
     saveProps = async (fileprops: FileProps) => {
+
         // @ts-ignore axios doesn't have PROPPATCH method
         const rawResponse = await this.connection({
             method: 'PROPPATCH',
@@ -105,6 +99,7 @@ export class Client {
                 .all()
                 .filter(prop => prop.name !== 'fileId')
                 .map(
+                    // tslint:disable-next-line
                     prop => `<d:set>
               <d:prop>
                 <oc:${prop.name}>${prop.value}</oc:${prop.name}>
@@ -114,10 +109,10 @@ export class Client {
                 .join('')}</d:propertyupdate>`,
         })
 
-        const responses: Array<MultiStatusResponse> = this._parseMultiStatus(
+        const responses: MultiStatusResponse[] = this._parseMultiStatus(
             rawResponse.data,
         )
-        var response = responses[0]
+        const response = responses[0]
         if (
             response.propStat.length === 0 ||
             response.propStat[0].status !== 'HTTP/1.1 200 OK'
@@ -132,8 +127,8 @@ export class Client {
 
     private _props = async (
         path: string,
-        names: Array<string>,
-    ): Promise<Array<MultiStatusResponse>> => {
+        names: string[],
+    ): Promise<MultiStatusResponse[]> => {
         // @ts-ignore axios doesn't have PROPFIND method
         const rawResponse = await this.connection({
             method: 'PROPFIND',
@@ -144,7 +139,10 @@ export class Client {
 					xmlns:nc="http://nextcloud.org/ns"
 					xmlns:ocs="http://open-collaboration-services.org/ns">
                 <d:prop>
-                    ${names.map(name => `<oc:${name} />`).join('')}
+                    ${
+                // tslint:disable-next-line
+                names.map(name => `<oc:${name} />`
+                ).join('')}
 				</d:prop>
 				</d:propfind>`,
         })
@@ -159,7 +157,7 @@ export class Client {
                 userVisible: true,
                 userAssignable: true,
                 canAssign: true,
-                name: name,
+                name,
             },
         })
         const url = response.headers['content-location']
@@ -183,10 +181,10 @@ export class Client {
         return result
     }
 
-    private _parseMultiStatus = (doc: string): Array<MultiStatusResponse> => {
-        const result: Array<MultiStatusResponse> = []
+    private _parseMultiStatus = (doc: string): MultiStatusResponse[] => {
+        const result: MultiStatusResponse[] = []
         const xmlNamespaces: object = this.xmlNamespaces
-        const resolver: Function = function(namespace: string) {
+        const resolver: ResolverFunction = (namespace: string) => {
             let ii: string
             for (ii in xmlNamespaces) {
                 if (xmlNamespaces[ii] === namespace) {
@@ -194,7 +192,7 @@ export class Client {
                 }
             }
             return undefined
-        }.bind(this)
+        }
 
         const responses = this._getElementsByTagName(
             doc,
@@ -263,12 +261,12 @@ export class Client {
     }
 
     private _parsePropNode = (e: any): string => {
-        let t: Array<any> | null = null
+        let t: any[] | null = null
         if (e.childNodes && e.childNodes.length > 0) {
-            const n: Array<any> = []
-            for (let r: number = 0; r < e.childNodes.length; r++) {
+            const n: any[] = []
+            for (let r = 0; r < e.childNodes.length; r++) {
                 const i: any = e.childNodes[r]
-                if (1 === i.nodeType) n.push(i)
+                if (1 === i.nodeType) { n.push(i) }
             }
             if (n.length) {
                 t = n
@@ -280,11 +278,12 @@ export class Client {
     private _getElementsByTagName = (
         node: any,
         name: string,
-        resolver: Function,
+        resolver: ResolverFunction,
     ): any => {
-        const parts: Array<string> = name.split(':')
+        const parts: string[] = name.split(':')
         const tagName: string = parts[1]
-        const namespace: string = resolver(parts[0])
+        // @Sergey what to do here? namespace could be undefined, I put in a naive fix..
+        const namespace: string = resolver(parts[0]) || ''
         if (typeof node === 'string') {
             const parser: DOMParser = new DOMParser()
             node = parser.parseFromString(node, 'text/xml')
@@ -293,5 +292,9 @@ export class Client {
             return node.getElementsByTagNameNS(namespace, tagName)
         }
         return node.getElementsByTagName(name)
+    }
+
+    static create(baseURL: string, auth: AxiosBasicCredentials) {
+        return new Client(axios.create({ baseURL, auth }))
     }
 }

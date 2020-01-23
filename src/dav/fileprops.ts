@@ -17,7 +17,7 @@ export class FileProps {
     }
 
     withProperty(name: string, value: string): FileProps {
-        let newProps = { ...this._props }
+        const newProps = { ...this._props }
         newProps[name] = value
         return new FileProps(this._path, newProps)
     }
@@ -26,9 +26,9 @@ export class FileProps {
         return this._props[name]
     }
 
-    all(): Array<Property> {
+    all(): Property[] {
         return Object.keys(this._props).reduce(
-            (carry: Array<Property>, key: string) => {
+            (carry: Property[], key: string) => {
                 carry.push({ name: key, value: this._props[key] })
                 return carry
             },
