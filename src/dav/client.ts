@@ -24,31 +24,27 @@ export class Client {
         'http://open-collaboration-services.org/ns': 'ocs',
     }
 
-    private _connection: AxiosInstance
-
-    constructor(connection: AxiosInstance) {
-        this._connection = connection
-    }
+    constructor(readonly connection: AxiosInstance) {}
 
     static create(baseURL: string, auth: AxiosBasicCredentials) {
         return new Client(axios.create({ baseURL, auth }))
     }
 
-    async addTag(fileId: string, tag: Tag) {
-        const response = await this._connection({
+    addTag = async (fileId: string, tag: Tag) => {
+        const response = await this.connection({
             method: 'PUT',
             url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
     }
 
-    async removeTag(fileId: string, tag: Tag) {
-        const response = await this._connection({
+    removeTag = async (fileId: string, tag: Tag) => {
+        const response = await this.connection({
             method: 'DELETE',
             url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
     }
 
-    async tagslist(fileId: string): Promise<Array<Tag>> {
+    tagslist = async (fileId: string): Promise<Array<Tag>> => {
         const url: string = `/systemtags-relations/files/${fileId}`
         const responses = await this._props(url, ['display-name', 'id'])
         var tags = responses.reduce(
@@ -73,10 +69,10 @@ export class Client {
         return tags
     }
 
-    async fileprops(
+    fileprops = async (
         path: string,
         names: Array<string> = ['fileId', 'foreign-id'],
-    ): Promise<FileProps> {
+    ): Promise<FileProps> => {
         const responses = await this._props(path, names)
         let response: MultiStatusResponse = responses[0]
         if (
@@ -98,9 +94,9 @@ export class Client {
         return new FileProps(path, props)
     }
 
-    async saveProps(fileprops: FileProps) {
+    saveProps = async (fileprops: FileProps) => {
         // @ts-ignore axios doesn't have PROPPATCH method
-        const rawResponse = await this._connection({
+        const rawResponse = await this.connection({
             method: 'PROPPATCH',
             url: fileprops.path(),
             data: `<?xml version="1.0"?>
@@ -134,12 +130,12 @@ export class Client {
         }
     }
 
-    private async _props(
+    private _props = async (
         path: string,
         names: Array<string>,
-    ): Promise<Array<MultiStatusResponse>> {
+    ): Promise<Array<MultiStatusResponse>> => {
         // @ts-ignore axios doesn't have PROPFIND method
-        const rawResponse = await this._connection({
+        const rawResponse = await this.connection({
             method: 'PROPFIND',
             url: path,
             data: `<?xml version="1.0"?>
@@ -155,8 +151,8 @@ export class Client {
         return this._parseMultiStatus(rawResponse.data)
     }
 
-    async createTag(name: string): Promise<Tag> {
-        const response = await this._connection({
+    createTag = async (name: string): Promise<Tag> => {
+        const response = await this.connection({
             method: 'POST',
             url: '/systemtags',
             data: {
@@ -171,7 +167,7 @@ export class Client {
         return new Tag(id, name)
     }
 
-    private _parseIdFromLocation(url: string): string {
+    private _parseIdFromLocation = (url: string): string => {
         const queryPos = url.indexOf('?')
         if (queryPos > 0) {
             url = url.substr(0, queryPos)
@@ -187,7 +183,7 @@ export class Client {
         return result
     }
 
-    private _parseMultiStatus(doc: string): Array<MultiStatusResponse> {
+    private _parseMultiStatus = (doc: string): Array<MultiStatusResponse> => {
         let result: Array<MultiStatusResponse> = []
         const xmlNamespaces: object = this.xmlNamespaces
         const resolver: Function = function(namespace: string) {
@@ -269,7 +265,7 @@ export class Client {
         return result
     }
 
-    private _parsePropNode(e: any): string {
+    private _parsePropNode = (e: any): string => {
         let t: Array<any> | null = null
         if (e.childNodes && e.childNodes.length > 0) {
             let n: Array<any> = []
@@ -284,11 +280,11 @@ export class Client {
         return t || e.textContent || e.text || ''
     }
 
-    private _getElementsByTagName(
+    private _getElementsByTagName = (
         node: any,
         name: string,
         resolver: Function,
-    ): any {
+    ): any => {
         let parts: Array<string> = name.split(':')
         let tagName: string = parts[1]
         let namespace: string = resolver(parts[0])
