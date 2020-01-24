@@ -1,28 +1,32 @@
 import { Client, FileProps, Tag } from '../index'
 import { AxiosBasicCredentials } from 'axios'
-
+// tslint:disable-next-line
 const username = 'arturking'
+// tslint:disable-next-line
 const password = '333333'
 const projectname = 'project1'
-let baseURL: string = 'http://localhost/remote.php/dav/'
+const baseURL = 'http://localhost/remote.php/dav/'
 
-let auth: AxiosBasicCredentials = {
+const auth: AxiosBasicCredentials = {
     username,
     password,
 }
-;(async () => {
-    let dav: Client = Client.create(baseURL, auth)
-    let fileprops: FileProps = await dav.fileprops(
+
+const run = async () => {
+    const dav: Client = Client.create(baseURL, auth)
+    const fileProps: FileProps = await dav.fileProps(
         `files/${username}/${projectname}/`,
     )
-    let tag: Tag = await dav.createTag('tag-1')
-    console.log(tag.id())
-    let tagslist = await dav.tagslist(fileprops.property('fileid'))
-    console.log(tagslist)
-    await dav.addTag(fileprops.property('fileid'), tag)
-    tagslist = await dav.tagslist(fileprops.property('fileid'))
-    console.log(tagslist)
-    await dav.removeTag(fileprops.property('fileid'), tag)
-    tagslist = await dav.tagslist(fileprops.property('fileid'))
-    console.log(tagslist)
-})()
+    const tag: Tag = await dav.createTag('tag-1')
+    console.log(tag.id)
+    const tagsList = await dav.tagsList(fileProps.property('fileId'))
+    console.log(tagsList)
+    await dav.addTag(fileProps.property('fileId'), tag)
+    const tagsListWithFileId = await dav.tagsList(fileProps.property('fileId'))
+    console.log(tagsListWithFileId)
+    await dav.removeTag(fileProps.property('fileId'), tag)
+    const tagsListRead = await dav.tagsList(fileProps.property('fileId'))
+    console.log(tagsListRead)
+}
+
+run().then()
