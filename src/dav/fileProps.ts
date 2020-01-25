@@ -4,8 +4,11 @@ interface Property {
 }
 
 export class FileProps {
-
-    constructor(readonly path: string, readonly props: object, readonly dirtyProps: object = {}) {}
+    constructor(
+        readonly path: string,
+        readonly props: object,
+        readonly dirtyProps: object = {},
+    ) {}
 
     withProperty = (name: string, value: string): FileProps => {
         const dirty = { [name]: value }
@@ -17,9 +20,12 @@ export class FileProps {
     }
 
     all = (): Property[] => {
-        return Object.keys({...this.props, ...this.dirtyProps}).reduce(
+        return Object.keys({ ...this.props, ...this.dirtyProps }).reduce(
             (carry: Property[], key: string) => {
-                carry.push({ name: key, value: this.dirtyProps[key] || this.props[key] })
+                carry.push({
+                    name: key,
+                    value: this.dirtyProps[key] || this.props[key],
+                })
                 return carry
             },
             [],

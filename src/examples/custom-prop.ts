@@ -2,7 +2,8 @@ import { Client, FileProps } from '../index'
 import axios, { AxiosRequestConfig } from 'axios'
 
 const username = 'username'
-const token = 'aHUMzWsLlXbRYsQaGrmTKMW6AjGdD7EZTWhqauljhn2W1BU3gVWaWZ6LxeJJgJk62DE9bjYC'
+const token =
+    'aHUMzWsLlXbRYsQaGrmTKMW6AjGdD7EZTWhqauljhn2W1BU3gVWaWZ6LxeJJgJk62DE9bjYC'
 
 const projectname = 'project1'
 const baseURL = 'http://localhost/remote.php/dav/'
@@ -13,7 +14,6 @@ const config: AxiosRequestConfig = {
 }
 
 const run = async () => {
-
     const client = axios.create(config)
     try {
         const dav: Client = Client.create(config)

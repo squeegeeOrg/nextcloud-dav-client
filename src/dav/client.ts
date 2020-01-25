@@ -19,7 +19,6 @@ interface PropertyStatus {
 type ResolverFunction = (namespace: string) => string | undefined
 
 export class Client {
-
     constructor(readonly connection: AxiosInstance) {}
     private xmlNamespaces: object = {
         'DAV:': 'd',
@@ -28,12 +27,14 @@ export class Client {
         'http://open-collaboration-services.org/ns': 'ocs',
     }
 
-    addTag = async (fileId: string, tag: Tag) =>  this.connection({
+    addTag = async (fileId: string, tag: Tag) =>
+        this.connection({
             method: 'PUT',
             url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
 
-    removeTag = async (fileId: string, tag: Tag) =>  await this.connection({
+    removeTag = async (fileId: string, tag: Tag) =>
+        await this.connection({
             method: 'DELETE',
             url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
@@ -41,25 +42,20 @@ export class Client {
     tagsList = async (fileId: string): Promise<Tag[]> => {
         const url = `/systemtags-relations/files/${fileId}`
         const responses = await this._props(url, ['oc:display-name', 'oc:id'])
-        return responses.reduce(
-            (carry: Tag[], item: MultiStatusResponse) => {
-                if (
-                    item.propStat.length === 0 ||
-                    item.propStat[0].status !== 'HTTP/1.1 200 OK'
-                ) {
-                    return carry
-                }
-                const tag = new Tag(
-                    item.propStat[0].properties['oc:id'],
-                    item.propStat[0].properties[
-                        'oc:display-name'
-                    ],
-                )
-                carry.push(tag)
+        return responses.reduce((carry: Tag[], item: MultiStatusResponse) => {
+            if (
+                item.propStat.length === 0 ||
+                item.propStat[0].status !== 'HTTP/1.1 200 OK'
+            ) {
                 return carry
-            },
-            [],
-        )
+            }
+            const tag = new Tag(
+                item.propStat[0].properties['oc:id'],
+                item.propStat[0].properties['oc:display-name'],
+            )
+            carry.push(tag)
+            return carry
+        }, [])
     }
 
     fileProps = async (
@@ -80,7 +76,7 @@ export class Client {
             'oc:tags',
             'oc:favorite',
             'oc:comments-unread',
-            'oc:owner-id'  ,
+            'oc:owner-id',
             'oc:owner-display-name',
             'oc:share-types',
             'oc:share-types',
@@ -109,7 +105,6 @@ export class Client {
     }
 
     saveProps = async (fileProps: FileProps) => {
-
         // @ts-ignore axios doesn't have PROPPATCH method
         const rawResponse = await this.connection({
             method: 'PROPPATCH',
@@ -138,9 +133,7 @@ export class Client {
             response.propStat[0].status !== 'HTTP/1.1 200 OK'
         ) {
             throw new Error(
-                `Can't update properties of file ${fileProps.path}. ${
-                    response.propStat[0].status
-                }`,
+                `Can't update properties of file ${fileProps.path}. ${response.propStat[0].status}`,
             )
         }
     }
@@ -160,9 +153,9 @@ export class Client {
 					xmlns:ocs="http://open-collaboration-services.org/ns">
                 <d:prop>
                     ${
-                // tslint:disable-next-line
-                names.map(name => `<${name} />`
-                ).join('')}
+                        // tslint:disable-next-line
+                        names.map(name => `<${name} />`).join('')
+                    }
 				</d:prop>
 				</d:propfind>`,
         })
@@ -264,7 +257,9 @@ export class Client {
                 for (let k = 0; k < propNode.childNodes.length; k++) {
                     const prop: any = propNode.childNodes[k]
                     const value: any = this._parsePropNode(prop)
-                    const namespace: string = this.xmlNamespaces[prop.namespaceURI] || prop.namespaceURI
+                    const namespace: string =
+                        this.xmlNamespaces[prop.namespaceURI] ||
+                        prop.namespaceURI
                     propStat.properties[
                         `${namespace}:${prop.localName || prop.baseName}`
                     ] = value
@@ -284,7 +279,9 @@ export class Client {
             const n: any[] = []
             for (let r = 0; r < e.childNodes.length; r++) {
                 const i: any = e.childNodes[r]
-                if (1 === i.nodeType) { n.push(i) }
+                if (1 === i.nodeType) {
+                    n.push(i)
+                }
             }
             if (n.length) {
                 t = n
@@ -297,7 +294,7 @@ export class Client {
         node: Document | string,
         name: string,
         resolver: ResolverFunction,
-    ):  HTMLCollectionOf<Element> => {
+    ): HTMLCollectionOf<Element> => {
         const parts: string[] = name.split(':')
         const tagName: string = parts[1]
         // @Sergey what to do here? namespace could be undefined, I put in a naive fix..
@@ -313,16 +310,6 @@ export class Client {
     }
 
     static create = (config: AxiosRequestConfig): Client => {
-            let client = axios.create(config);
-            // client.interceptors.request.use(request => {
-            // console.log('Starting Request', request)
-            // return request
-            // })
-
-            // client.interceptors.response.use(response => {
-            // console.log('Response:', response)
-            // return response
-            // })
-        return new Client(client);
+        return new Client(axios.create(config))
     }
 }
