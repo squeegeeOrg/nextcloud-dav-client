@@ -40,7 +40,7 @@ export class Client {
 
     tagsList = async (fileId: string): Promise<Tag[]> => {
         const url = `/systemtags-relations/files/${fileId}`
-        const responses = await this._props(url, ['display-name', 'id'])
+        const responses = await this._props(url, ['oc:display-name', 'oc:id'])
         return responses.reduce(
             (carry: Tag[], item: MultiStatusResponse) => {
                 if (
@@ -50,9 +50,9 @@ export class Client {
                     return carry
                 }
                 const tag = new Tag(
-                    item.propStat[0].properties['{http://owncloud.org/ns}id'],
+                    item.propStat[0].properties['oc:id'],
                     item.propStat[0].properties[
-                        '{http://owncloud.org/ns}display-name'
+                        'oc:display-name'
                     ],
                 )
                 carry.push(tag)
@@ -64,7 +64,28 @@ export class Client {
 
     fileProps = async (
         path: string,
-        names: string[] = ['fileId', 'foreign-id'],
+        names: string[] = [
+            'd:getlastmodified',
+            'd:getetag',
+            'd:getcontenttype',
+            'd:resourcetype',
+            'oc:fileid',
+            'oc:permissions',
+            'oc:size',
+            'd:getcontentlength',
+            'nc:has-preview',
+            'nc:mount-type',
+            'nc:is-encrypted',
+            'ocs:share-permissions',
+            'oc:tags',
+            'oc:favorite',
+            'oc:comments-unread',
+            'oc:owner-id'  ,
+            'oc:owner-display-name',
+            'oc:share-types',
+            'oc:share-types',
+            'oc:foreign-id',
+        ],
     ): Promise<FileProps> => {
         const responses = await this._props(path, names)
         const response: MultiStatusResponse = responses[0]
@@ -96,13 +117,12 @@ export class Client {
             data: `<?xml version="1.0"?>
             <d:propertyupdate  xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
             ${fileProps
-                .all()
-                .filter(prop => prop.name !== 'fileId')
+                .dirty()
                 .map(
                     // tslint:disable-next-line
                     prop => `<d:set>
               <d:prop>
-                <oc:${prop.name}>${prop.value}</oc:${prop.name}>
+                <${prop.name}>${prop.value}</${prop.name}>
               </d:prop>
             </d:set>`,
                 )
@@ -141,7 +161,7 @@ export class Client {
                 <d:prop>
                     ${
                 // tslint:disable-next-line
-                names.map(name => `<oc:${name} />`
+                names.map(name => `<${name} />`
                 ).join('')}
 				</d:prop>
 				</d:propfind>`,
@@ -244,11 +264,9 @@ export class Client {
                 for (let k = 0; k < propNode.childNodes.length; k++) {
                     const prop: any = propNode.childNodes[k]
                     const value: any = this._parsePropNode(prop)
+                    const namespace: string = this.xmlNamespaces[prop.namespaceURI] || prop.namespaceURI
                     propStat.properties[
-                        '{' +
-                            prop.namespaceURI +
-                            '}' +
-                            (prop.localName || prop.baseName)
+                        `${namespace}:${prop.localName || prop.baseName}`
                     ] = value
                 }
                 response.propStat.push(propStat)
@@ -294,7 +312,17 @@ export class Client {
         return node.getElementsByTagName(name)
     }
 
-    static create(baseURL: string, auth: AxiosBasicCredentials) {
-        return new Client(axios.create({ baseURL, auth }))
+    static create = (config: AxiosRequestConfig): Client => {
+            let client = axios.create(config);
+            // client.interceptors.request.use(request => {
+            // console.log('Starting Request', request)
+            // return request
+            // })
+
+            // client.interceptors.response.use(response => {
+            // console.log('Response:', response)
+            // return response
+            // })
+        return new Client(client);
     }
 }
