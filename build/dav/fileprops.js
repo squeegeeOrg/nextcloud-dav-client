@@ -9,7 +9,7 @@ class FileProps {
         return this._path;
     }
     withProperty(name, value) {
-        let newProps = Object.assign({}, this._props);
+        const newProps = Object.assign({}, this._props);
         newProps[name] = value;
         return new FileProps(this._path, newProps);
     }

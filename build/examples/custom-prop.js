@@ -8,23 +8,34 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const index_1 = require("../index");
+const axios_1 = __importDefault(require("axios"));
 const username = 'arturking';
-const password = '333333';
+const token = 'aHUMzWsLlXbRYsQaGrmTKMW6AjGdD7EZTWhqauljhn2W1BU3gVWaWZ6LxeJJgJk62DE9bjYC';
 const projectname = 'project1';
-let baseURL = 'http://localhost/remote.php/dav/';
-let auth = {
-    username,
-    password,
+const baseURL = 'http://localhost/remote.php/dav/';
+const config = {
+    baseURL,
+    headers: { Authorization: `Bearer ${token}` },
 };
-(() => __awaiter(void 0, void 0, void 0, function* () {
-    let dav = index_1.Client.create(baseURL, auth);
-    let fileprops = yield dav.fileprops(`files/${username}/${projectname}/`);
-    console.log(fileprops.property('fileid'));
-    fileprops = fileprops.withProperty('foreign-id', 'foo');
-    yield dav.saveProps(fileprops);
-    fileprops = yield dav.fileprops(`files/${username}/${projectname}/`);
-    console.log(fileprops.all());
-}))();
+const run = () => __awaiter(void 0, void 0, void 0, function* () {
+    const client = axios_1.default.create(config);
+    try {
+        const dav = index_1.Client.create(config);
+        let fileprops = yield dav.fileProps(`files/${username}/${projectname}/`);
+        console.log(fileprops.property('oc:fileid'));
+        fileprops = fileprops.withProperty('oc:foreign-id', 'qdwdfdsfderw');
+        yield dav.saveProps(fileprops);
+        fileprops = yield dav.fileProps(`files/${username}/${projectname}/`);
+        console.log(fileprops.all());
+    }
+    catch (error) {
+        console.log(error);
+    }
+});
+run().then();
 //# sourceMappingURL=custom-prop.js.map
