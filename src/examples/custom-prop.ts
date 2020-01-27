@@ -23,7 +23,7 @@ const run = async () => {
         )
 
         console.log(fileprops.property('oc:fileid'))
-        fileprops = fileprops.withProperty('oc:foreign-id', 'qdwdfdsfderw')
+        fileprops = fileprops.withProperty('oc:foreign-id', 'value')
         await dav.saveProps(fileprops)
         fileprops = await dav.fileProps(`files/${username}/${projectname}/`)
         console.log(fileprops.all())
