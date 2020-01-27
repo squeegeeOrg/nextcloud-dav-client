@@ -3,7 +3,7 @@
   "description": "Wrapper for nextcloud webdav",
   "scripts": {
     "clean": "rm -rf build/*",
-    "start": "npm run build && node build/index.js",
+    "start": "npm run build && node build/src/index.js",
     "build": "tsc",
     "prettier": "npm run prettier-md && npm run prettier-ts",
     "prettier-md": "prettier --parser markdown --write \"*.md\"",
@@ -11,7 +11,7 @@
     "lint": "npm run lint-ts && npm run lint-md",
     "lint-md": "markdownlint \"*.md\"",
     "lint-ts": "tslint --project ./tsconfig.json --fix \"./src/**/*.ts\"",
-    "test": "mocha --opts ./mocha.opts './src/**/*.test.ts'",
+    "test": "mocha --opts ./mocha.opts './tests/**/*.test.ts'",
     "watch": "nodemon ./src/index.ts | bunyan"
   },
   "author": "Wuerth-IT GmbH",
