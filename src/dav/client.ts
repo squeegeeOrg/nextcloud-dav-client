@@ -178,7 +178,7 @@ export class Client {
     }
 
     private _parseMultiStatus = (doc: string): MultiStatusResponse[] => {
-        return MultiStatusResponse.fromString(doc);
+        return MultiStatusResponse.fromString(doc)
     }
 
     static create = (config: AxiosRequestConfig): Client => {

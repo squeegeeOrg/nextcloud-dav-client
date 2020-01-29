@@ -8,7 +8,6 @@ interface PropertyStatus {
 type ResolverFunction = (namespace: string) => string | undefined
 
 export class MultiStatusResponse {
-
     static xmlNamespaces: object = {
         'DAV:': 'd',
         'http://owncloud.org/ns': 'oc',
@@ -16,7 +15,10 @@ export class MultiStatusResponse {
         'http://open-collaboration-services.org/ns': 'ocs',
     }
 
-    constructor(public href: string | null, public propStat: PropertyStatus[]) {}
+    constructor(
+        public href: string | null,
+        public propStat: PropertyStatus[],
+    ) {}
 
     static fromString = (doc: string): MultiStatusResponse[] => {
         const result: MultiStatusResponse[] = []
@@ -38,10 +40,7 @@ export class MultiStatusResponse {
         )
         for (let i = 0; i < responses.length; i++) {
             const responseNode: any = responses[i]
-            const response = new MultiStatusResponse(
-                null,
-                [],
-            )
+            const response = new MultiStatusResponse(null, [])
 
             const hrefNode: any = MultiStatusResponse._getElementsByTagName(
                 responseNode,
@@ -82,7 +81,7 @@ export class MultiStatusResponse {
                     const prop: any = propNode.childNodes[k]
                     const value: any = MultiStatusResponse._parsePropNode(prop)
                     const namespace: string =
-                    MultiStatusResponse.xmlNamespaces[prop.namespaceURI] ||
+                        MultiStatusResponse.xmlNamespaces[prop.namespaceURI] ||
                         prop.namespaceURI
                     propStat.properties[
                         `${namespace}:${prop.localName || prop.baseName}`
@@ -132,5 +131,4 @@ export class MultiStatusResponse {
         }
         return node.getElementsByTagName(name)
     }
-
 }
