@@ -14,17 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const fileProps_1 = require("./fileProps");
-const xmldom_1 = require("xmldom");
 const tag_1 = require("./tag");
+const multiStatusResponse_1 = require("./multiStatusResponse");
 class Client {
     constructor(connection) {
         this.connection = connection;
-        this.xmlNamespaces = {
-            'DAV:': 'd',
-            'http://owncloud.org/ns': 'oc',
-            'http://nextcloud.org/ns': 'nc',
-            'http://open-collaboration-services.org/ns': 'ocs',
-        };
         this.addTag = (fileId, tag) => __awaiter(this, void 0, void 0, function* () {
             return this.connection({
                 method: 'PUT',
@@ -158,93 +152,12 @@ class Client {
             return result;
         };
         this._parseMultiStatus = (doc) => {
-            const result = [];
-            const xmlNamespaces = this.xmlNamespaces;
-            const resolver = (namespace) => {
-                let ii;
-                for (ii in xmlNamespaces) {
-                    if (xmlNamespaces[ii] === namespace) {
-                        return ii;
-                    }
-                }
-                return undefined;
-            };
-            const responses = this._getElementsByTagName(doc, 'd:response', resolver);
-            for (let i = 0; i < responses.length; i++) {
-                const responseNode = responses[i];
-                const response = {
-                    href: null,
-                    propStat: [],
-                };
-                const hrefNode = this._getElementsByTagName(responseNode, 'd:href', resolver)[0];
-                response.href = hrefNode.textContent || hrefNode.text;
-                const propStatNodes = this._getElementsByTagName(responseNode, 'd:propstat', resolver);
-                for (let j = 0; j < propStatNodes.length; j++) {
-                    const propStatNode = propStatNodes[j];
-                    const statusNode = this._getElementsByTagName(propStatNode, 'd:status', resolver)[0];
-                    const propStat = {
-                        status: statusNode.textContent || statusNode.text,
-                        properties: {},
-                    };
-                    const propNode = this._getElementsByTagName(propStatNode, 'd:prop', resolver)[0];
-                    if (!propNode) {
-                        continue;
-                    }
-                    for (let k = 0; k < propNode.childNodes.length; k++) {
-                        const prop = propNode.childNodes[k];
-                        const value = this._parsePropNode(prop);
-                        const namespace = this.xmlNamespaces[prop.namespaceURI] || prop.namespaceURI;
-                        propStat.properties[`${namespace}:${prop.localName || prop.baseName}`] = value;
-                    }
-                    response.propStat.push(propStat);
-                }
-                result.push(response);
-            }
-            return result;
-        };
-        this._parsePropNode = (e) => {
-            let t = null;
-            if (e.childNodes && e.childNodes.length > 0) {
-                const n = [];
-                for (let r = 0; r < e.childNodes.length; r++) {
-                    const i = e.childNodes[r];
-                    if (1 === i.nodeType) {
-                        n.push(i);
-                    }
-                }
-                if (n.length) {
-                    t = n;
-                }
-            }
-            return t || e.textContent || e.text || '';
-        };
-        this._getElementsByTagName = (node, name, resolver) => {
-            const parts = name.split(':');
-            const tagName = parts[1];
-            // @Sergey what to do here? namespace could be undefined, I put in a naive fix..
-            const namespace = resolver(parts[0]) || '';
-            if (typeof node === 'string') {
-                const parser = new xmldom_1.DOMParser();
-                node = parser.parseFromString(node, 'text/xml');
-            }
-            if (node.getElementsByTagNameNS) {
-                return node.getElementsByTagNameNS(namespace, tagName);
-            }
-            return node.getElementsByTagName(name);
+            return multiStatusResponse_1.MultiStatusResponse.fromString(doc);
         };
     }
 }
 exports.Client = Client;
 Client.create = (config) => {
-    let client = axios_1.default.create(config);
-    // client.interceptors.request.use(request => {
-    // console.log('Starting Request', request)
-    // return request
-    // })
-    // client.interceptors.response.use(response => {
-    // console.log('Response:', response)
-    // return response
-    // })
-    return new Client(client);
+    return new Client(axios_1.default.create(config));
 };
 //# sourceMappingURL=client.js.map

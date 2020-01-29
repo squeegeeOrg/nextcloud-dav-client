@@ -14,7 +14,10 @@ class FileProps {
         };
         this.all = () => {
             return Object.keys(Object.assign(Object.assign({}, this.props), this.dirtyProps)).reduce((carry, key) => {
-                carry.push({ name: key, value: this.dirtyProps[key] || this.props[key] });
+                carry.push({
+                    name: key,
+                    value: this.dirtyProps[key] || this.props[key],
+                });
                 return carry;
             }, []);
         };
