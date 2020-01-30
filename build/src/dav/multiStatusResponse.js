@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const xmldom_1 = require("xmldom");
+const jsdom_1 = require("jsdom");
+const DOMParser = new jsdom_1.JSDOM().window.DOMParser;
 class MultiStatusResponse {
     constructor(href, propStat) {
         this.href = href;
@@ -46,6 +47,9 @@ MultiStatusResponse.fromString = (doc) => {
             }
             for (let k = 0; k < propNode.childNodes.length; k++) {
                 const prop = propNode.childNodes[k];
+                if (prop.nodeName === '#text') {
+                    continue;
+                }
                 const value = MultiStatusResponse._parsePropNode(prop);
                 const namespace = MultiStatusResponse.xmlNamespaces[prop.namespaceURI] ||
                     prop.namespaceURI;
@@ -79,7 +83,7 @@ MultiStatusResponse._getElementsByTagName = (node, name, resolver) => {
     // @Sergey what to do here? namespace could be undefined, I put in a naive fix..
     const namespace = resolver(parts[0]) || '';
     if (typeof node === 'string') {
-        const parser = new xmldom_1.DOMParser();
+        const parser = new DOMParser();
         node = parser.parseFromString(node, 'text/xml');
     }
     if (node.getElementsByTagNameNS) {
