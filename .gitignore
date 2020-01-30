@@ -102,3 +102,7 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Build of examples and tests
+build/src/examples
+build/tests

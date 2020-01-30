@@ -1,28 +1,35 @@
-import { Client, FileProps, Tag } from '../index'
-import { AxiosBasicCredentials } from 'axios'
+import { Client, FileProps } from '../index'
+import axios, { AxiosRequestConfig } from 'axios'
 
-// tslint:disable-next-line
-const username = 'arturking'
-// tslint:disable-next-line
-const password = '333333'
-const projectName = 'project1'
+const username = 'username'
+const token =
+    'aHUMzWsLlXbRYsQaGrmTKMW6AjGdD7EZTWhqauljhn2W1BU3gVWaWZ6LxeJJgJk62DE9bjYC'
+
+const projectname = 'project1'
 const baseURL = 'http://localhost/remote.php/dav/'
 
-const auth: AxiosBasicCredentials = {
-    username,
-    password,
+const config: AxiosRequestConfig = {
+    baseURL,
+    headers: { Authorization: `Bearer ${token}` },
 }
 
 const run = async () => {
-    const dav: Client = Client.create(baseURL, auth)
-    const fileProps: FileProps = await dav.fileProps(
-        `files/${username}/${projectName}/`,
-    )
-    console.log(fileProps.property('fileId'))
-    const filePropsWithForeignId = fileProps.withProperty('foreign-id', 'foo')
-    await dav.saveProps(filePropsWithForeignId)
-    const filePropsRead = await dav.fileProps(`files/${username}/${projectName}/`)
-    console.log(filePropsRead.all())
+    const client = axios.create(config)
+    try {
+        const dav: Client = Client.create(config)
+
+        let fileprops: FileProps = await dav.fileProps(
+            `files/${username}/${projectname}/`,
+        )
+
+        console.log(fileprops.property('oc:fileid'))
+        fileprops = fileprops.withProperty('oc:foreign-id', 'value')
+        await dav.saveProps(fileprops)
+        fileprops = await dav.fileProps(`files/${username}/${projectname}/`)
+        console.log(fileprops.all())
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 run().then()

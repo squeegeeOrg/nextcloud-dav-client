@@ -1,32 +1,43 @@
 import { Client, FileProps, Tag } from '../index'
-import { AxiosBasicCredentials } from 'axios'
-// tslint:disable-next-line
-const username = 'arturking'
-// tslint:disable-next-line
-const password = '333333'
+import { AxiosRequestConfig } from 'axios'
+
+const username = 'username'
+const token =
+    'aHUMzWsLlXbRYsQaGrmTKMW6AjGdD7EZTWhqauljhn2W1BU3gVWaWZ6LxeJJgJk62DE9bjYC'
+
 const projectname = 'project1'
 const baseURL = 'http://localhost/remote.php/dav/'
 
-const auth: AxiosBasicCredentials = {
-    username,
-    password,
+const config: AxiosRequestConfig = {
+    baseURL,
+    headers: { Authorization: `Bearer ${token}` },
 }
 
 const run = async () => {
-    const dav: Client = Client.create(baseURL, auth)
-    const fileProps: FileProps = await dav.fileProps(
-        `files/${username}/${projectname}/`,
-    )
-    const tag: Tag = await dav.createTag('tag-1')
-    console.log(tag.id)
-    const tagsList = await dav.tagsList(fileProps.property('fileId'))
-    console.log(tagsList)
-    await dav.addTag(fileProps.property('fileId'), tag)
-    const tagsListWithFileId = await dav.tagsList(fileProps.property('fileId'))
-    console.log(tagsListWithFileId)
-    await dav.removeTag(fileProps.property('fileId'), tag)
-    const tagsListRead = await dav.tagsList(fileProps.property('fileId'))
-    console.log(tagsListRead)
+    try {
+        const dav: Client = Client.create(config)
+        const fileProps: FileProps = await dav.fileProps(
+            `files/${username}/${projectname}/`,
+        )
+        const tag: Tag = await dav.createTag('tag-1')
+        console.log(tag.id)
+        const originTagsList = await dav.tagsList(
+            fileProps.property('oc:fileid'),
+        )
+        console.log(originTagsList)
+        await dav.addTag(fileProps.property('oc:fileid'), tag)
+        const tagsListWithTag = await dav.tagsList(
+            fileProps.property('oc:fileid'),
+        )
+        console.log(tagsListWithTag)
+        await dav.removeTag(fileProps.property('oc:fileid'), tag)
+        const tagsListWithRemovedTag = await dav.tagsList(
+            fileProps.property('oc:fileid'),
+        )
+        console.log(tagsListWithRemovedTag)
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 run().then()

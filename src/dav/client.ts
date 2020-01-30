@@ -4,67 +4,67 @@ import axios, {
     AxiosRequestConfig,
 } from 'axios'
 import { FileProps } from './fileProps'
-import { DOMParser } from 'xmldom'
 import { Tag } from './tag'
-interface MultiStatusResponse {
-    href: string | null
-    propStat: PropertyStatus[]
-}
-
-interface PropertyStatus {
-    status: string
-    properties: object
-}
-
-type ResolverFunction = (namespace: string) => string | undefined
+import { MultiStatusResponse } from './multiStatusResponse'
 
 export class Client {
-
     constructor(readonly connection: AxiosInstance) {}
-    private xmlNamespaces: object = {
-        'DAV:': 'd',
-        'http://owncloud.org/ns': 'oc',
-        'http://nextcloud.org/ns': 'nc',
-        'http://open-collaboration-services.org/ns': 'ocs',
-    }
 
-    addTag = async (fileId: string, tag: Tag) =>  this.connection({
+    addTag = async (fileId: string, tag: Tag) =>
+        this.connection({
             method: 'PUT',
             url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
 
-    removeTag = async (fileId: string, tag: Tag) =>  await this.connection({
+    removeTag = async (fileId: string, tag: Tag) =>
+        await this.connection({
             method: 'DELETE',
             url: `/systemtags-relations/files/${fileId}/${tag.id}`,
         })
 
     tagsList = async (fileId: string): Promise<Tag[]> => {
         const url = `/systemtags-relations/files/${fileId}`
-        const responses = await this._props(url, ['display-name', 'id'])
-        return responses.reduce(
-            (carry: Tag[], item: MultiStatusResponse) => {
-                if (
-                    item.propStat.length === 0 ||
-                    item.propStat[0].status !== 'HTTP/1.1 200 OK'
-                ) {
-                    return carry
-                }
-                const tag = new Tag(
-                    item.propStat[0].properties['{http://owncloud.org/ns}id'],
-                    item.propStat[0].properties[
-                        '{http://owncloud.org/ns}display-name'
-                    ],
-                )
-                carry.push(tag)
+        const responses = await this._props(url, ['oc:display-name', 'oc:id'])
+        return responses.reduce((carry: Tag[], item: MultiStatusResponse) => {
+            if (
+                item.propStat.length === 0 ||
+                item.propStat[0].status !== 'HTTP/1.1 200 OK'
+            ) {
                 return carry
-            },
-            [],
-        )
+            }
+            const tag = new Tag(
+                item.propStat[0].properties['oc:id'],
+                item.propStat[0].properties['oc:display-name'],
+            )
+            carry.push(tag)
+            return carry
+        }, [])
     }
 
     fileProps = async (
         path: string,
-        names: string[] = ['fileId', 'foreign-id'],
+        names: string[] = [
+            'd:getlastmodified',
+            'd:getetag',
+            'd:getcontenttype',
+            'd:resourcetype',
+            'oc:fileid',
+            'oc:permissions',
+            'oc:size',
+            'd:getcontentlength',
+            'nc:has-preview',
+            'nc:mount-type',
+            'nc:is-encrypted',
+            'ocs:share-permissions',
+            'oc:tags',
+            'oc:favorite',
+            'oc:comments-unread',
+            'oc:owner-id',
+            'oc:owner-display-name',
+            'oc:share-types',
+            'oc:share-types',
+            'oc:foreign-id',
+        ],
     ): Promise<FileProps> => {
         const responses = await this._props(path, names)
         const response: MultiStatusResponse = responses[0]
@@ -88,7 +88,6 @@ export class Client {
     }
 
     saveProps = async (fileProps: FileProps) => {
-
         // @ts-ignore axios doesn't have PROPPATCH method
         const rawResponse = await this.connection({
             method: 'PROPPATCH',
@@ -96,13 +95,12 @@ export class Client {
             data: `<?xml version="1.0"?>
             <d:propertyupdate  xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
             ${fileProps
-                .all()
-                .filter(prop => prop.name !== 'fileId')
+                .dirty()
                 .map(
                     // tslint:disable-next-line
                     prop => `<d:set>
               <d:prop>
-                <oc:${prop.name}>${prop.value}</oc:${prop.name}>
+                <${prop.name}>${prop.value}</${prop.name}>
               </d:prop>
             </d:set>`,
                 )
@@ -118,9 +116,7 @@ export class Client {
             response.propStat[0].status !== 'HTTP/1.1 200 OK'
         ) {
             throw new Error(
-                `Can't update properties of file ${fileProps.path}. ${
-                    response.propStat[0].status
-                }`,
+                `Can't update properties of file ${fileProps.path}. ${response.propStat[0].status}`,
             )
         }
     }
@@ -140,9 +136,9 @@ export class Client {
 					xmlns:ocs="http://open-collaboration-services.org/ns">
                 <d:prop>
                     ${
-                // tslint:disable-next-line
-                names.map(name => `<oc:${name} />`
-                ).join('')}
+                        // tslint:disable-next-line
+                        names.map(name => `<${name} />`).join('')
+                    }
 				</d:prop>
 				</d:propfind>`,
         })
@@ -182,119 +178,10 @@ export class Client {
     }
 
     private _parseMultiStatus = (doc: string): MultiStatusResponse[] => {
-        const result: MultiStatusResponse[] = []
-        const xmlNamespaces: object = this.xmlNamespaces
-        const resolver: ResolverFunction = (namespace: string) => {
-            let ii: string
-            for (ii in xmlNamespaces) {
-                if (xmlNamespaces[ii] === namespace) {
-                    return ii
-                }
-            }
-            return undefined
-        }
-
-        const responses = this._getElementsByTagName(
-            doc,
-            'd:response',
-            resolver,
-        )
-        for (let i = 0; i < responses.length; i++) {
-            const responseNode: any = responses[i]
-            const response: MultiStatusResponse = {
-                href: null,
-                propStat: [],
-            }
-
-            const hrefNode: any = this._getElementsByTagName(
-                responseNode,
-                'd:href',
-                resolver,
-            )[0]
-
-            response.href = hrefNode.textContent || hrefNode.text
-
-            const propStatNodes = this._getElementsByTagName(
-                responseNode,
-                'd:propstat',
-                resolver,
-            )
-
-            for (let j = 0; j < propStatNodes.length; j++) {
-                const propStatNode: any = propStatNodes[j]
-                const statusNode: any = this._getElementsByTagName(
-                    propStatNode,
-                    'd:status',
-                    resolver,
-                )[0]
-
-                const propStat: PropertyStatus = {
-                    status: statusNode.textContent || statusNode.text,
-                    properties: {},
-                }
-
-                const propNode: any = this._getElementsByTagName(
-                    propStatNode,
-                    'd:prop',
-                    resolver,
-                )[0]
-                if (!propNode) {
-                    continue
-                }
-                for (let k = 0; k < propNode.childNodes.length; k++) {
-                    const prop: any = propNode.childNodes[k]
-                    const value: any = this._parsePropNode(prop)
-                    propStat.properties[
-                        '{' +
-                            prop.namespaceURI +
-                            '}' +
-                            (prop.localName || prop.baseName)
-                    ] = value
-                }
-                response.propStat.push(propStat)
-            }
-
-            result.push(response)
-        }
-
-        return result
+        return MultiStatusResponse.fromString(doc)
     }
 
-    private _parsePropNode = (e: any): string => {
-        let t: any[] | null = null
-        if (e.childNodes && e.childNodes.length > 0) {
-            const n: any[] = []
-            for (let r = 0; r < e.childNodes.length; r++) {
-                const i: any = e.childNodes[r]
-                if (1 === i.nodeType) { n.push(i) }
-            }
-            if (n.length) {
-                t = n
-            }
-        }
-        return t || e.textContent || e.text || ''
-    }
-
-    private _getElementsByTagName = (
-        node: Document | string,
-        name: string,
-        resolver: ResolverFunction,
-    ):  HTMLCollectionOf<Element> => {
-        const parts: string[] = name.split(':')
-        const tagName: string = parts[1]
-        // @Sergey what to do here? namespace could be undefined, I put in a naive fix..
-        const namespace: string = resolver(parts[0]) || ''
-        if (typeof node === 'string') {
-            const parser: DOMParser = new DOMParser()
-            node = parser.parseFromString(node, 'text/xml')
-        }
-        if (node.getElementsByTagNameNS) {
-            return node.getElementsByTagNameNS(namespace, tagName)
-        }
-        return node.getElementsByTagName(name)
-    }
-
-    static create(baseURL: string, auth: AxiosBasicCredentials) {
-        return new Client(axios.create({ baseURL, auth }))
+    static create = (config: AxiosRequestConfig): Client => {
+        return new Client(axios.create(config))
     }
 }
