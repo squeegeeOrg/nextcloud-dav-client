@@ -1,4 +1,5 @@
-import { DOMParser } from 'xmldom'
+import { JSDOM } from 'jsdom'
+const DOMParser = new JSDOM().window.DOMParser
 
 interface PropertyStatus {
     status: string
@@ -79,6 +80,9 @@ export class MultiStatusResponse {
                 }
                 for (let k = 0; k < propNode.childNodes.length; k++) {
                     const prop: any = propNode.childNodes[k]
+                    if (prop.nodeName === '#text') {
+                        continue
+                    }
                     const value: any = MultiStatusResponse._parsePropNode(prop)
                     const namespace: string =
                         MultiStatusResponse.xmlNamespaces[prop.namespaceURI] ||
