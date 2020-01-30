@@ -21,11 +21,17 @@ describe('fromString', () => {
       expect(response[0].propStat).to.have.lengthOf(2)
       expect(response[0].propStat[0].status).to.equal('HTTP/1.1 200 OK')
       expect(response[0].propStat[1].status).to.equal('HTTP/1.1 404 Not Found')
-      expect(response[0].propStat[0].properties['d:getlastmodified']).to.equal('Wed, 22 Jan 2020 04:31:10 GMT')
-      expect(response[0].propStat[0].properties['oc:fileid']).to.equal('307')
-      expect(response[0].propStat[0].properties['nc:has-preview']).to.equal('false')
-      expect(response[0].propStat[0].properties['ocs:share-permissions']).to.equal('31')
-      expect(Object.keys(response[0].propStat[0].properties)).to.be.lengthOf(5)
+      expect(response[0].propStat[0].properties).to.deep.equal({
+        "d:getlastmodified": "Wed, 22 Jan 2020 04:31:10 GMT",
+        "nc:has-preview": "false",
+        "oc:fileid": "307",
+        "ocs:share-permissions": "31"
+      })
+      expect(response[0].propStat[1].properties).to.deep.equal({
+        "d:getcontentlength": "",
+        "d:getcontenttype": ""
+      })
+
     })
 
 })
