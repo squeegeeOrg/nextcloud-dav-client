@@ -6,6 +6,7 @@ import axios, {
 import { FileProps } from './fileProps'
 import { Tag } from './tag'
 import { MultiStatusResponse } from './multiStatusResponse'
+import { Project } from './project'
 
 export class Client {
     constructor(readonly connection: AxiosInstance) {}
@@ -121,6 +122,40 @@ export class Client {
         }
     }
 
+    createTag = async (name: string): Promise<Tag> => {
+        const response = await this.connection({
+            method: 'POST',
+            url: '/systemtags',
+            data: {
+                userVisible: true,
+                userAssignable: true,
+                canAssign: true,
+                name,
+            },
+        })
+        const url = response.headers['content-location']
+        const id = this._parseIdFromLocation(url)
+        return new Tag(id, name)
+    }
+
+    createProject = async (
+        username: string,
+        name: string,
+        foreignId: string,
+    ): Promise<Project> => {
+        const response = await this.connection({
+            method: 'POST',
+            url: `/projects/${username}`,
+            data: {
+                name,
+                'foreign-id': foreignId,
+            },
+        })
+        const data = response.data
+        const url = response.headers['content-location']
+        return new Project(data.id, data.name, foreignId, url)
+    }
+
     private _props = async (
         path: string,
         names: string[],
@@ -143,22 +178,6 @@ export class Client {
 				</d:propfind>`,
         })
         return this._parseMultiStatus(rawResponse.data)
-    }
-
-    createTag = async (name: string): Promise<Tag> => {
-        const response = await this.connection({
-            method: 'POST',
-            url: '/systemtags',
-            data: {
-                userVisible: true,
-                userAssignable: true,
-                canAssign: true,
-                name,
-            },
-        })
-        const url = response.headers['content-location']
-        const id = this._parseIdFromLocation(url)
-        return new Tag(id, name)
     }
 
     private _parseIdFromLocation = (url: string): string => {
