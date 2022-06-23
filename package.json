@@ -29,7 +29,7 @@
     "@types/jsdom": "12.2.4",
     "@types/xmldom": "0.1.29",
     "axios": "0.19.1",
-    "jsdom": "16.0.1"
+    "jsdom": "16.5.0"
   },
   "devDependencies": {
     "@types/chai": "4.2.6",
